@@ -1,5 +1,144 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard — Complejo Deportivo{% endblock %}
+
 {% block content %}
-<h2 class="text-2xl font-bold">Dashboard</h2>
+
+<!-- Título -->
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">Dashboard</h2>
+    <p class="text-base-content/60">{{ today|date:"l j \d\e F \d\e Y" }}</p>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-base-content/60 text-sm">Reservas hoy</p>
+                    <p class="text-3xl font-bold text-primary">{{ total_bookings_today }}</p>
+                </div>
+                <div class="text-4xl">📅</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-base-content/60 text-sm">Canchas activas</p>
+                    <p class="text-3xl font-bold text-success">{{ total_resources }}</p>
+                </div>
+                <div class="text-4xl">🏟️</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-base-content/60 text-sm">Clientes</p>
+                    <p class="text-3xl font-bold text-warning">{{ total_clients }}</p>
+                </div>
+                <div class="text-4xl">👥</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-base-content/60 text-sm">Ingresos estimados hoy</p>
+                    <p class="text-3xl font-bold text-error">${{ daily_revenue|floatformat:0 }}</p>
+                </div>
+                <div class="text-4xl">💰</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Reservas de hoy y próximas -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+    <!-- Reservas de hoy -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-lg mb-2">Reservas de hoy</h3>
+            {% if bookings_today %}
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Horario</th>
+                                <th>Cancha</th>
+                                <th>Cliente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings_today %}
+                            <tr class="hover">
+                                <td class="font-mono">
+                                    {{ booking.start_time|time:"H:i" }} — {{ booking.end_time|time:"H:i" }}
+                                </td>
+                                <td>{{ booking.resource.name }}</td>
+                                <td>{{ booking.client.name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-base-content/40">
+                    <p class="text-4xl mb-2">📭</p>
+                    <p>No hay reservas para hoy</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Próximas reservas -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-lg mb-2">Próximas reservas</h3>
+            {% if upcoming_bookings %}
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Horario</th>
+                                <th>Cancha</th>
+                                <th>Cliente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in upcoming_bookings %}
+                            <tr class="hover">
+                                <td>{{ booking.date|date:"d/m" }}</td>
+                                <td class="font-mono">
+                                    {{ booking.start_time|time:"H:i" }}
+                                </td>
+                                <td>{{ booking.resource.name }}</td>
+                                <td>{{ booking.client.name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-base-content/40">
+                    <p class="text-4xl mb-2">📭</p>
+                    <p>No hay próximas reservas</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
 {% endblock %}
