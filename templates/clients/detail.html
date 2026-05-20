@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}{{ client.name }}{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">{{ client.name }}</h2>
+        <p class="text-base-content/60">{{ client.phone }} {% if client.email %}· {{ client.email }}{% endif %}</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'clients:edit' client.pk %}" class="btn btn-outline">Editar</a>
+        <a href="{% url 'clients:list' %}" class="btn btn-ghost">Volver</a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Reservas activas</p>
+            <p class="text-3xl font-bold text-primary">{{ client.total_bookings }}</p>
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Cliente desde</p>
+            <p class="text-xl font-bold">{{ client.created_at|date:"d/m/Y" }}</p>
+        </div>
+    </div>
+    {% if client.notes %}
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Notas</p>
+            <p class="text-sm">{{ client.notes }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Historial de reservas -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h3 class="card-title mb-4">Reservas</h3>
+        {% if bookings %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Horario</th>
+                        <th>Cancha</th>
+                        <th>Precio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr class="hover">
+                        <td>{{ booking.date|date:"d/m/Y" }}</td>
+                        <td class="font-mono">{{ booking.start_time|time:"H:i" }} — {{ booking.end_time|time:"H:i" }}</td>
+                        <td>{{ booking.resource.name }}</td>
+                        <td>${{ booking.total_price|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-base-content/40">
+            <p>No hay reservas para este cliente</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
