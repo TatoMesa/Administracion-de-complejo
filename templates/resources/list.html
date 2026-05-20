@@ -1,5 +1,71 @@
 {% extends 'base.html' %}
-{% block title %}Lsitado de canchas{% endblock %}
+{% block title %}Canchas{% endblock %}
+
 {% block content %}
-<h2 class="text-2xl font-bold">Lsitado de canchas</h2>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Canchas</h2>
+        <p class="text-base-content/60">Recursos disponibles del complejo</p>
+    </div>
+    <a href="{% url 'resources:create' %}" class="btn btn-primary">
+        + Nueva cancha
+    </a>
+</div>
+
+{% if resources %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {% for resource in resources %}
+    <div class="card bg-base-100 shadow hover:shadow-md transition-shadow">
+        <div class="card-body">
+            <div class="flex items-start justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-2xl">{{ resource.sport.icon }}</span>
+                        <h3 class="card-title text-lg">{{ resource.name }}</h3>
+                    </div>
+                    <span class="badge badge-ghost badge-sm">{{ resource.sport.name }}</span>
+                </div>
+                <div class="text-right">
+                    <p class="text-xl font-bold text-primary">${{ resource.price_per_hour|floatformat:0 }}</p>
+                    <p class="text-xs text-base-content/50">por hora</p>
+                </div>
+            </div>
+
+            <div class="divider my-2"></div>
+
+            <div class="flex justify-between text-sm text-base-content/70">
+                <span>👥 Capacidad: {{ resource.capacity }} jugadores</span>
+            </div>
+
+            {% if resource.description %}
+            <p class="text-sm text-base-content/60 mt-1">{{ resource.description }}</p>
+            {% endif %}
+
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'resources:edit' resource.pk %}" class="btn btn-sm btn-outline">
+                    Editar
+                </a>
+                <form method="post" action="{% url 'resources:delete' resource.pk %}"
+                    onsubmit="return confirm('¿Desactivar esta cancha?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-error btn-outline">
+                        Desactivar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-16 text-base-content/40">
+    <p class="text-5xl mb-4">🏟️</p>
+    <p class="text-lg">No hay canchas activas</p>
+    <a href="{% url 'resources:create' %}" class="btn btn-primary btn-sm mt-4">
+        Agregar primera cancha
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}

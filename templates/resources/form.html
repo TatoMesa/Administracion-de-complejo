@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">{{ title }}</h2>
+    <p class="text-base-content/60">Completá los datos de la cancha</p>
+</div>
+
+<div class="card bg-base-100 shadow max-w-2xl">
+    <div class="card-body">
+
+        {% if form.errors %}
+        <div class="alert alert-error mb-4">
+            {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Nombre</span></label>
+                    {{ form.name }}
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Deporte</span></label>
+                    {{ form.sport }}
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Capacidad</span></label>
+                    {{ form.capacity }}
+                </div>
+
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Precio por hora</span></label>
+                    {{ form.price_per_hour }}
+                </div>
+
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Descripción</span></label>
+                    {{ form.description }}
+                </div>
+
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'resources:list' %}" class="btn btn-ghost">Cancelar</a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}
