@@ -2,9 +2,32 @@ from django import forms
 from .models import Booking
 from resources.models import Resource
 from clients.models import Client
+import datetime
+
+
+def get_time_choices():
+    """Genera opciones de 00:00 a 23:30 en intervalos de 30 minutos."""
+    choices = []
+    for hour in range(0, 24):
+        for minute in (0, 30):
+            time = datetime.time(hour, minute)
+            label = time.strftime('%H:%M')
+            choices.append((label, label))
+    return choices
 
 
 class BookingForm(forms.ModelForm):
+    start_time = forms.ChoiceField(
+        choices=get_time_choices,
+        label='Hora inicio',
+        widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
+    )
+    end_time = forms.ChoiceField(
+        choices=get_time_choices,
+        label='Hora fin',
+        widget=forms.Select(attrs={'class': 'select select-bordered w-full'})
+    )
+
     class Meta:
         model = Booking
         fields = ['resource', 'client', 'date', 'start_time', 'end_time', 'notes']
@@ -12,8 +35,6 @@ class BookingForm(forms.ModelForm):
             'resource': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'client': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
-            'start_time': forms.TimeInput(attrs={'class': 'input input-bordered w-full', 'type': 'time'}),
-            'end_time': forms.TimeInput(attrs={'class': 'input input-bordered w-full', 'type': 'time'}),
             'notes': forms.Textarea(attrs={'class': 'textarea textarea-bordered w-full', 'rows': 3}),
         }
 
@@ -22,6 +43,27 @@ class BookingForm(forms.ModelForm):
         self.fields['resource'].queryset = Resource.objects.filter(is_active=True)
         self.fields['client'].queryset = Client.objects.filter(is_active=True)
         self.fields['notes'].required = False
+
+        # Si hay instancia, pre-seleccionar los valores actuales
+        if self.instance and self.instance.pk:
+            if self.instance.start_time:
+                self.fields['start_time'].initial = self.instance.start_time.strftime('%H:%M')
+            if self.instance.end_time:
+                self.fields['end_time'].initial = self.instance.end_time.strftime('%H:%M')
+
+    def clean_start_time(self):
+        value = self.cleaned_data.get('start_time')
+        try:
+            return datetime.datetime.strptime(value, '%H:%M').time()
+        except (ValueError, TypeError):
+            raise forms.ValidationError('Hora inválida.')
+
+    def clean_end_time(self):
+        value = self.cleaned_data.get('end_time')
+        try:
+            return datetime.datetime.strptime(value, '%H:%M').time()
+        except (ValueError, TypeError):
+            raise forms.ValidationError('Hora inválida.')
 
     def clean(self):
         cleaned_data = super().clean()

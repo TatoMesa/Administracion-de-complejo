@@ -74,9 +74,15 @@
                         <td>${{ booking.total_price|floatformat:0 }}</td>
                         <td>
                             {% if booking.recurrence %}
-                                <span class="badge badge-info badge-sm">
-                                    {{ booking.recurrence.get_frequency_display }}
-                                </span>
+                                {% if booking.recurrence.frequency == 'weekly' %}
+                                    <span class="badge badge-success badge-sm">
+                                        {{ booking.recurrence.get_frequency_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-warning badge-sm">
+                                        {{ booking.recurrence.get_frequency_display }}
+                                    </span>
+                                {% endif %}
                             {% else %}
                                 <span class="text-base-content/30">—</span>
                             {% endif %}
