@@ -113,9 +113,11 @@ class Booking(models.Model):
     @property
     def duration_hours(self):
         from datetime import datetime, date
+        from decimal import Decimal
         start = datetime.combine(date.today(), self.start_time)
         end = datetime.combine(date.today(), self.end_time)
-        return (end - start).seconds / 3600
+        seconds = (end - start).seconds
+        return Decimal(seconds) / Decimal(3600)
 
     @property
     def total_price(self):

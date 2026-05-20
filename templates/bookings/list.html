@@ -1,5 +1,110 @@
 {% extends 'base.html' %}
-{% block title %}Listado de reservas{% endblock %}
+{% block title %}Reservas{% endblock %}
+
 {% block content %}
-<h2 class="text-2xl font-bold">Listado de Reservas</h2>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Reservas</h2>
+        <p class="text-base-content/60">Gestión de reservas del complejo</p>
+    </div>
+    <a href="{% url 'bookings:create' %}" class="btn btn-primary">
+        + Nueva reserva
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body py-4">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="form-control">
+                <label class="label"><span class="label-text">Fecha</span></label>
+                <input type="date" name="date" value="{{ date_filter }}"
+                    class="input input-bordered input-sm">
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text">Cancha</span></label>
+                <select name="resource" class="select select-bordered select-sm">
+                    <option value="">Todas</option>
+                    {% for resource in resources %}
+                        <option value="{{ resource.id }}"
+                            {% if resource_filter == resource.id|stringformat:"s" %}selected{% endif %}>
+                            {{ resource.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-neutral">Filtrar</button>
+            <a href="{% url 'bookings:list' %}" class="btn btn-sm btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body p-0">
+        {% if bookings %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Horario</th>
+                        <th>Cancha</th>
+                        <th>Cliente</th>
+                        <th>Duración</th>
+                        <th>Precio</th>
+                        <th>Recurrente</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr class="hover">
+                        <td>{{ booking.date|date:"d/m/Y" }}</td>
+                        <td class="font-mono">
+                            {{ booking.start_time|time:"H:i" }} — {{ booking.end_time|time:"H:i" }}
+                        </td>
+                        <td>
+                            <span class="badge badge-ghost">{{ booking.resource.sport.icon }}</span>
+                            {{ booking.resource.name }}
+                        </td>
+                        <td>{{ booking.client.name }}</td>
+                        <td>{{ booking.duration_hours|floatformat:1 }}hs</td>
+                        <td>${{ booking.total_price|floatformat:0 }}</td>
+                        <td>
+                            {% if booking.recurrence %}
+                                <span class="badge badge-info badge-sm">
+                                    {{ booking.recurrence.get_frequency_display }}
+                                </span>
+                            {% else %}
+                                <span class="text-base-content/30">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'bookings:cancel' booking.pk %}"
+                                onsubmit="return confirm('¿Cancelar esta reserva?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-xs btn-error btn-outline">
+                                    Cancelar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-16 text-base-content/40">
+            <p class="text-5xl mb-4">📭</p>
+            <p class="text-lg">No hay reservas</p>
+            <a href="{% url 'bookings:create' %}" class="btn btn-primary btn-sm mt-4">
+                Crear primera reserva
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
