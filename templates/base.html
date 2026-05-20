@@ -1,0 +1,43 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Complejo Deportivo{% endblock %}</title>
+    {% tailwind_css %}
+</head>
+<body class="bg-base-200 min-h-screen">
+
+    <div class="drawer lg:drawer-open">
+        <input id="drawer-toggle" type="checkbox" class="drawer-toggle">
+
+        <!-- Contenido principal -->
+        <div class="drawer-content flex flex-col">
+
+            {% include 'partials/navbar.html' %}
+
+            <main class="flex-1 p-6">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-4">
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+        </div>
+
+        <!-- Sidebar -->
+        <div class="drawer-side">
+            <label for="drawer-toggle" class="drawer-overlay"></label>
+            {% include 'partials/sidebar.html' %}
+        </div>
+
+    </div>
+
+</body>
+</html>
