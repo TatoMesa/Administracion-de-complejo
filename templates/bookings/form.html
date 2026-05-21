@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Nueva Reserva{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
 
@@ -19,7 +19,7 @@
         </div>
         {% endif %}
 
-        <form method="post">
+        <form method="post" id="booking-form">
             {% csrf_token %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -27,38 +27,43 @@
                 <div class="form-control md:col-span-2">
                     <label class="label"><span class="label-text font-medium">Cancha</span></label>
                     {{ form.resource }}
-                    {% if form.resource.errors %}
-                        <span class="text-error text-sm mt-1">{{ form.resource.errors }}</span>
-                    {% endif %}
                 </div>
 
                 <div class="form-control md:col-span-2">
                     <label class="label"><span class="label-text font-medium">Cliente</span></label>
                     {{ form.client }}
-                    {% if form.client.errors %}
-                        <span class="text-error text-sm mt-1">{{ form.client.errors }}</span>
-                    {% endif %}
                 </div>
 
-                <div class="form-control">
+                <div class="form-control md:col-span-2">
                     <label class="label"><span class="label-text font-medium">Fecha</span></label>
                     {{ form.date }}
                 </div>
 
+                <!-- Aviso de disponibilidad -->
+                <div class="md:col-span-2 hidden" id="availability-message">
+                    <div class="alert alert-warning">
+                        <span id="availability-text"></span>
+                    </div>
+                </div>
+
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Hora inicio</span></label>
-                    {{ form.start_time }}
+                    <select name="start_time" id="id_start_time" class="select select-bordered w-full">
+                        <option value="">-- Seleccioná cancha y fecha --</option>
+                    </select>
                 </div>
 
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Hora fin</span></label>
-                    {{ form.end_time }}
+                    <select name="end_time" id="id_end_time" class="select select-bordered w-full">
+                        <option value="">-- Seleccioná hora inicio --</option>
+                    </select>
                 </div>
 
                 <!-- Recurrencia -->
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Repetición</span></label>
-                    <select name="recurrence_type" class="select select-bordered w-full">
+                    <select name="recurrence_type" id="recurrence_type" class="select select-bordered w-full">
                         <option value="none">Sin repetición</option>
                         <option value="weekly">Semanal</option>
                         <option value="biweekly">Quincenal</option>
@@ -67,8 +72,7 @@
 
                 <div class="form-control md:col-span-2" id="recurrence_end_div" style="display:none">
                     <label class="label"><span class="label-text font-medium">Repetir hasta</span></label>
-                    <input type="date" name="recurrence_end_date"
-                        class="input input-bordered w-full">
+                    <input type="date" name="recurrence_end_date" class="input input-bordered w-full">
                 </div>
 
                 <div class="form-control md:col-span-2">
@@ -88,12 +92,92 @@
 </div>
 
 <script>
-    const recurrenceSelect = document.querySelector('select[name="recurrence_type"]');
-    const endDiv = document.getElementById('recurrence_end_div');
+    const resourceSelect = document.querySelector('select[name="resource"]');
+    const dateInput = document.querySelector('input[name="date"]');
+    const startSelect = document.getElementById('id_start_time');
+    const endSelect = document.getElementById('id_end_time');
+    const availabilityMessage = document.getElementById('availability-message');
+    const availabilityText = document.getElementById('availability-text');
+    const recurrenceSelect = document.getElementById('recurrence_type');
+    const recurrenceEndDiv = document.getElementById('recurrence_end_div');
 
+    // Mostrar/ocultar fecha fin de recurrencia
     recurrenceSelect.addEventListener('change', function() {
-        endDiv.style.display = this.value !== 'none' ? 'block' : 'none';
+        recurrenceEndDiv.style.display = this.value !== 'none' ? 'block' : 'none';
     });
+
+    // Cargar slots cuando cambia cancha o fecha
+    function loadSlots() {
+        const resource = resourceSelect.value;
+        const date = dateInput.value;
+
+        if (!resource || !date) return;
+
+        // Limpiar selectores
+        startSelect.innerHTML = '<option value="">Cargando...</option>';
+        endSelect.innerHTML = '<option value="">-- Seleccioná hora inicio --</option>';
+        availabilityMessage.classList.add('hidden');
+
+        fetch(`{% url 'bookings:slots' %}?resource=${resource}&date=${date}`)
+            .then(res => res.json())
+            .then(data => {
+                startSelect.innerHTML = '';
+
+                if (data.reason) {
+                    availabilityMessage.classList.remove('hidden');
+                    availabilityText.textContent = data.reason;
+                    startSelect.innerHTML = '<option value="">Sin horarios disponibles</option>';
+                    return;
+                }
+
+                if (data.slots.length === 0) {
+                    startSelect.innerHTML = '<option value="">Sin horarios disponibles</option>';
+                    return;
+                }
+
+                startSelect.innerHTML = '<option value="">-- Seleccioná hora inicio --</option>';
+                data.slots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot;
+                    option.textContent = slot;
+                    startSelect.appendChild(option);
+                });
+            });
+    }
+
+    // Actualizar hora fin cuando cambia hora inicio
+    startSelect.addEventListener('change', function() {
+        const selectedIndex = [...startSelect.options].findIndex(o => o.value === this.value);
+        const allSlots = [...startSelect.options]
+            .map(o => o.value)
+            .filter(v => v !== '');
+
+        endSelect.innerHTML = '<option value="">-- Seleccioná hora fin --</option>';
+
+        // Mostrar solo slots posteriores al inicio
+        allSlots.slice(selectedIndex + 1).forEach(slot => {
+            const option = document.createElement('option');
+            option.value = slot;
+            option.textContent = slot;
+            endSelect.appendChild(option);
+        });
+
+        // Agregar el cierre del horario como última opción
+        const lastSlot = allSlots[allSlots.length - 1];
+        if (lastSlot) {
+            const [h, m] = lastSlot.split(':').map(Number);
+            const closeDate = new Date();
+            closeDate.setHours(h, m + 30, 0);
+            const closeTime = closeDate.toTimeString().slice(0, 5);
+            const option = document.createElement('option');
+            option.value = closeTime;
+            option.textContent = closeTime;
+            endSelect.appendChild(option);
+        }
+    });
+
+    resourceSelect.addEventListener('change', loadSlots);
+    dateInput.addEventListener('change', loadSlots);
 </script>
 
 {% endblock %}

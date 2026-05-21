@@ -25,4 +25,5 @@ urlpatterns = [
     path('reservas/', include('bookings.urls', namespace='bookings')),
     path('canchas/', include('resources.urls', namespace='resources')),
     path('clientes/', include('clients.urls', namespace='clients')),
+    path('disponibilidad/', include('availability.urls', namespace='availability')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

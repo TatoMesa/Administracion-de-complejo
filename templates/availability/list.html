@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Disponibilidad{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">Disponibilidad</h2>
+    <p class="text-base-content/60">Horarios y excepciones por cancha</p>
+</div>
+
+{% for resource in resources %}
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+
+        <!-- Header cancha -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">{{ resource.sport.icon }}</span>
+                <h3 class="card-title">{{ resource.name }}</h3>
+                <span class="badge badge-ghost">{{ resource.sport.name }}</span>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'availability:rule_create' resource.pk %}"
+                    class="btn btn-sm btn-outline btn-primary">
+                    + Horario
+                </a>
+                <a href="{% url 'availability:exception_create' resource.pk %}"
+                    class="btn btn-sm btn-outline btn-warning">
+                    + Excepción
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Horarios regulares -->
+            <div>
+                <h4 class="font-semibold text-sm text-base-content/60 uppercase mb-3">Horarios regulares</h4>
+                {% with rules=resource.availability_rules.all %}
+                {% if rules %}
+                <div class="space-y-2">
+                    {% for rule in rules %}
+                    <div class="flex items-center justify-between bg-base-200 rounded-lg px-4 py-2">
+                        <div class="flex items-center gap-3">
+                            <span class="font-medium w-24">{{ rule.get_day_of_week_display }}</span>
+                            <span class="font-mono text-sm">
+                                {{ rule.open_time|time:"H:i" }} — {{ rule.close_time|time:"H:i" }}
+                            </span>
+                        </div>
+                        <form method="post" action="{% url 'availability:rule_delete' rule.pk %}"
+                            onsubmit="return confirm('¿Eliminar este horario?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-error btn-outline">
+                                Eliminar
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-base-content/40 text-sm">Sin horarios configurados</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Excepciones -->
+            <div>
+                <h4 class="font-semibold text-sm text-base-content/60 uppercase mb-3">Excepciones</h4>
+                {% with exceptions=resource.availability_exceptions.all %}
+                {% if exceptions %}
+                <div class="space-y-2">
+                    {% for exc in exceptions %}
+                    <div class="flex items-center justify-between bg-base-200 rounded-lg px-4 py-2">
+                        <div class="flex items-center gap-3">
+                            <span class="font-medium">{{ exc.date|date:"d/m/Y" }}</span>
+                            {% if exc.is_closed %}
+                                <span class="badge badge-error badge-sm">Cerrado</span>
+                            {% else %}
+                                <span class="font-mono text-sm">
+                                    {{ exc.open_time|time:"H:i" }} — {{ exc.close_time|time:"H:i" }}
+                                </span>
+                            {% endif %}
+                            <span class="text-xs text-base-content/50">{{ exc.reason }}</span>
+                        </div>
+                        <form method="post" action="{% url 'availability:exception_delete' exc.pk %}"
+                            onsubmit="return confirm('¿Eliminar esta excepción?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-error btn-outline">
+                                Eliminar
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-base-content/40 text-sm">Sin excepciones registradas</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

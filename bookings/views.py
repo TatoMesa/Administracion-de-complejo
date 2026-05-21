@@ -6,7 +6,8 @@ from resources.models import Resource
 from clients.models import Client
 from .forms import BookingForm
 import datetime
-
+from django.http import JsonResponse
+from dateutil.relativedelta import relativedelta
 
 def booking_list(request):
     bookings = Booking.objects.filter(
@@ -85,9 +86,81 @@ def booking_cancel(request, pk):
 
 def _generate_recurring_bookings(original, rule, user):
     """Genera todas las reservas futuras según la regla de recurrencia."""
-    from dateutil.relativedelta import relativedelta
+    
 
     current_date = original.date
     end_date = rule.end_date or (current_date + datetime.timedelta(weeks=12))
 
     delta = datetime.timedelta(weeks=1) if rule.frequency == 'weekly' else datetime.timedelta(weeks=2)
+
+
+def get_available_slots(request):
+    resource_id = request.GET.get('resource')
+    date_str = request.GET.get('date')
+
+    if not resource_id or not date_str:
+        return JsonResponse({'slots': []})
+
+    import datetime
+    from availability.models import AvailabilityRule, AvailabilityException
+
+    try:
+        date = datetime.date.fromisoformat(date_str)
+        resource = Resource.objects.get(pk=resource_id, is_active=True)
+    except (ValueError, Resource.DoesNotExist):
+        return JsonResponse({'slots': []})
+
+    # Verificar si hay excepcion de cierre para esa fecha
+    exception = AvailabilityException.objects.filter(
+        resource=resource,
+        date=date
+    ).first()
+
+    if exception and exception.is_closed:
+        return JsonResponse({'slots': [], 'reason': 'La cancha esta cerrada ese dia.'})
+
+    # Obtener horario del dia de la semana
+    day_of_week = date.weekday()
+
+    if exception and not exception.is_closed:
+        open_time = exception.open_time
+        close_time = exception.close_time
+    else:
+        rule = AvailabilityRule.objects.filter(
+            resource=resource,
+            day_of_week=day_of_week
+        ).first()
+
+        if not rule:
+            return JsonResponse({'slots': [], 'reason': 'La cancha no tiene horario configurado para ese dia.'})
+
+        open_time = rule.open_time
+        close_time = rule.close_time
+
+    # Generar slots de 30 minutos
+    slots = []
+    current = datetime.datetime.combine(date, open_time)
+    end = datetime.datetime.combine(date, close_time)
+
+    while current < end:
+        slots.append(current.strftime('%H:%M'))
+        current += datetime.timedelta(minutes=30)
+
+    # Filtrar slots ocupados por reservas confirmadas
+    confirmed_bookings = Booking.objects.filter(
+        resource=resource,
+        date=date,
+        status='confirmed'
+    )
+
+    available_slots = []
+    for slot in slots:
+        slot_time = datetime.datetime.strptime(slot, '%H:%M').time()
+        occupied = confirmed_bookings.filter(
+            start_time__lte=slot_time,
+            end_time__gt=slot_time
+        ).exists()
+        if not occupied:
+            available_slots.append(slot)
+
+    return JsonResponse({'slots': available_slots})

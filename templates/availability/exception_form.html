@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">{{ title }}</h2>
+</div>
+
+<div class="card bg-base-100 shadow max-w-md">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex flex-col gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Día</span></label>
+                    {{ form.day_of_week }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Hora apertura</span></label>
+                    {{ form.open_time }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Hora cierre</span></label>
+                    {{ form.close_time }}
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'availability:list' %}" class="btn btn-ghost">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
