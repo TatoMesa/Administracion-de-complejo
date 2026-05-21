@@ -8,4 +8,5 @@ urlpatterns = [
     path('nueva/', views.booking_create, name='create'),
     path('<int:pk>/cancelar/', views.booking_cancel, name='cancel'),
     path('slots/', views.get_available_slots, name='slots'),
+    path('historial/', views.booking_history, name='history'),
 ]

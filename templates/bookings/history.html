@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Reservas{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Historial de Reservas</h2>
+        <p class="text-base-content/60">Reservas completadas y canceladas</p>
+    </div>
+</div>
+
+<!-- Totales -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Completadas</p>
+            <p class="text-3xl font-bold text-success">{{ total_completed }}</p>
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Canceladas</p>
+            <p class="text-3xl font-bold text-error">{{ total_cancelled }}</p>
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Ingresos totales</p>
+            <p class="text-3xl font-bold text-primary">${{ total_revenue|floatformat:0 }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body py-4">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="form-control">
+                <label class="label"><span class="label-text">Desde</span></label>
+                <input type="date" name="date_from" value="{{ date_from }}"
+                    class="input input-bordered input-sm">
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text">Hasta</span></label>
+                <input type="date" name="date_to" value="{{ date_to }}"
+                    class="input input-bordered input-sm">
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text">Cancha</span></label>
+                <select name="resource" class="select select-bordered select-sm">
+                    <option value="">Todas</option>
+                    {% for resource in resources %}
+                        <option value="{{ resource.id }}"
+                            {% if resource_filter == resource.id|stringformat:"s" %}selected{% endif %}>
+                            {{ resource.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-control">
+                <label class="label"><span class="label-text">Estado</span></label>
+                <select name="status" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>
+                        Completadas
+                    </option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>
+                        Canceladas
+                    </option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-sm btn-neutral">Filtrar</button>
+            <a href="{% url 'bookings:history' %}" class="btn btn-sm btn-ghost">Limpiar</a>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body p-0">
+        {% if bookings %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Horario</th>
+                        <th>Cancha</th>
+                        <th>Cliente</th>
+                        <th>Duración</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr class="hover">
+                        <td>{{ booking.date|date:"d/m/Y" }}</td>
+                        <td class="font-mono">
+                            {{ booking.start_time|time:"H:i" }} — {{ booking.end_time|time:"H:i" }}
+                        </td>
+                        <td>
+                            <span class="badge badge-ghost">{{ booking.resource.sport.icon }}</span>
+                            {{ booking.resource.name }}
+                        </td>
+                        <td>{{ booking.client.name }}</td>
+                        <td>{{ booking.duration_hours|floatformat:1 }}hs</td>
+                        <td>
+                            {% if booking.status == 'completed' %}
+                                ${{ booking.total_price|floatformat:0 }}
+                            {% else %}
+                                <span class="text-base-content/30">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if booking.status == 'completed' %}
+                                <span class="badge badge-success badge-sm">Completada</span>
+                            {% else %}
+                                <span class="badge badge-error badge-sm">Cancelada</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-16 text-base-content/40">
+            <p class="text-5xl mb-4">📋</p>
+            <p class="text-lg">No hay registros en el historial</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

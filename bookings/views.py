@@ -164,3 +164,36 @@ def get_available_slots(request):
             available_slots.append(slot)
 
     return JsonResponse({'slots': available_slots})
+
+def booking_history(request):
+    bookings = Booking.objects.filter(
+        status__in=['completed', 'cancelled']
+    ).select_related('resource', 'client').order_by('-date', '-start_time')
+
+    # Filtros
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    resource_filter = request.GET.get('resource')
+    status_filter = request.GET.get('status')
+
+    if date_from:
+        bookings = bookings.filter(date__gte=date_from)
+    if date_to:
+        bookings = bookings.filter(date__lte=date_to)
+    if resource_filter:
+        bookings = bookings.filter(resource_id=resource_filter)
+    if status_filter:
+        bookings = bookings.filter(status=status_filter)
+
+    context = {
+        'bookings': bookings,
+        'resources': Resource.objects.filter(is_active=True),
+        'date_from': date_from or '',
+        'date_to': date_to or '',
+        'resource_filter': resource_filter or '',
+        'status_filter': status_filter or '',
+        'total_completed': bookings.filter(status='completed').count(),
+        'total_cancelled': bookings.filter(status='cancelled').count(),
+        'total_revenue': sum(b.total_price for b in bookings.filter(status='completed')),
+    }
+    return render(request, 'bookings/history.html', context)
