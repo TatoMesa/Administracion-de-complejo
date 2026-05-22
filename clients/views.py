@@ -2,7 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from .models import Client
 from .forms import ClientForm
-
+from django.core.paginator import Paginator
+from django.utils import timezone
+from bookings.models import Booking
 
 def client_list(request):
     clients = Client.objects.filter(is_active=True).order_by('name')
@@ -11,8 +13,12 @@ def client_list(request):
     if search:
         clients = clients.filter(name__icontains=search) | clients.filter(phone__icontains=search)
 
+    paginator = Paginator(clients, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'clients': clients,
+        'page_obj': page_obj,
         'search': search or '',
     }
     return render(request, 'clients/list.html', context)
@@ -46,9 +52,6 @@ def client_edit(request, pk):
 
 
 def client_delete(request, pk):
-    from django.utils import timezone
-    from bookings.models import Booking
-
     client = get_object_or_404(Client, pk=pk)
     if request.method == 'POST':
         # Cancelar reservas futuras

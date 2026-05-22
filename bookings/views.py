@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils import timezone
+from django.core.paginator import Paginator
 from .models import Booking, RecurrenceRule
 from resources.models import Resource
 from clients.models import Client
@@ -23,8 +24,13 @@ def booking_list(request):
     if resource_filter:
         bookings = bookings.filter(resource_id=resource_filter)
 
+    # Paginacion
+    paginator = Paginator(bookings, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'bookings': bookings,
+        'page_obj': page_obj,
         'resources': Resource.objects.filter(is_active=True),
         'date_filter': date_filter or '',
         'resource_filter': resource_filter or '',

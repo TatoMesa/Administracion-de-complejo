@@ -32,7 +32,7 @@
 <!-- Tabla -->
 <div class="card bg-base-100 shadow">
     <div class="card-body p-0">
-        {% if clients %}
+        {% if page_obj %}
         <div class="overflow-x-auto">
             <table class="table">
                 <thead>
@@ -45,7 +45,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for client in clients %}
+                    {% for client in page_obj %}
                     <tr class="hover">
                         <td>
                             <a href="{% url 'clients:detail' client.pk %}"
@@ -76,6 +76,34 @@
                 </tbody>
             </table>
         </div>
+        {% if page_obj.has_other_pages %}
+        <div class="flex justify-center p-4 border-t border-base-200">
+            <div class="join">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&search={{ search }}"
+                        class="join-item btn btn-sm">«</a>
+                {% else %}
+                    <button class="join-item btn btn-sm btn-disabled">«</button>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <button class="join-item btn btn-sm btn-active">{{ num }}</button>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}&search={{ search }}"
+                            class="join-item btn btn-sm">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&search={{ search }}"
+                        class="join-item btn btn-sm">»</a>
+                {% else %}
+                    <button class="join-item btn btn-sm btn-disabled">»</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
         {% else %}
         <div class="text-center py-16 text-base-content/40">
             <p class="text-5xl mb-4">👥</p>
