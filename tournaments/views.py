@@ -222,14 +222,23 @@ def match_result(request, pk):
     if request.method == 'POST':
         form = MatchResultForm(request.POST, instance=match)
         if form.is_valid():
-            old_status = match.status
+            # Leer valores anteriores directo de DB antes de guardar
+            old = Match.objects.get(pk=pk)
+            old_status = old.status
+            old_home_score = old.home_score
+            old_away_score = old.away_score
+
             match = form.save()
 
-            # Actualizar tabla si el partido fue finalizado
-            if match.status == 'finished' and old_status != 'finished':
+            if match.status == 'finished':
+                if old_status == 'finished' and old_home_score is not None:
+                    _revert_standings(match, old_home_score, old_away_score)
                 _update_standings(match)
                 messages.success(request, 'Resultado guardado y tabla actualizada.')
             else:
+                # Si cambia de finished a otro estado, revertir
+                if old_status == 'finished' and old_home_score is not None:
+                    _revert_standings(match, old_home_score, old_away_score)
                 messages.success(request, 'Resultado guardado.')
 
             return redirect('tournaments:detail', pk=match.tournament.pk)
@@ -241,6 +250,42 @@ def match_result(request, pk):
         'match': match,
     })
 
+def _revert_standings(match, home_score, away_score):
+    """Revierte el resultado anterior de la tabla antes de actualizar."""
+    try:
+        home_standing = Standing.objects.get(
+            tournament=match.tournament,
+            team=match.home_team,
+            group=match.group
+        )
+        away_standing = Standing.objects.get(
+            tournament=match.tournament,
+            team=match.away_team,
+            group=match.group
+        )
+    except Standing.DoesNotExist:
+        return
+
+    home_standing.played = max(0, home_standing.played - 1)
+    away_standing.played = max(0, away_standing.played - 1)
+    home_standing.goals_for = max(0, home_standing.goals_for - home_score)
+    home_standing.goals_against = max(0, home_standing.goals_against - away_score)
+    away_standing.goals_for = max(0, away_standing.goals_for - away_score)
+    away_standing.goals_against = max(0, away_standing.goals_against - home_score)
+
+    # Revertir resultado anterior
+    if home_score > away_score:
+        home_standing.won = max(0, home_standing.won - 1)
+        away_standing.lost = max(0, away_standing.lost - 1)
+    elif away_score > home_score:
+        away_standing.won = max(0, away_standing.won - 1)
+        home_standing.lost = max(0, home_standing.lost - 1)
+    else:
+        home_standing.drawn = max(0, home_standing.drawn - 1)
+        away_standing.drawn = max(0, away_standing.drawn - 1)
+
+    home_standing.save()
+    away_standing.save()
 
 def _update_standings(match):
     """Actualiza la tabla de posiciones tras cargar un resultado."""
