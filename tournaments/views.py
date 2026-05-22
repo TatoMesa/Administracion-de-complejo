@@ -105,7 +105,12 @@ def player_create(request, pk):
                 messages.success(request, f'Jugador {player.name} agregado.')
                 return redirect('tournaments:team_detail', pk=team.pk)
             except Exception as e:
-                messages.error(request, str(e))
+                from django.core.exceptions import ValidationError
+                if isinstance(e, ValidationError):
+                    for msg in e.messages:
+                        messages.error(request, msg)
+                else:
+                    messages.error(request, str(e))
     else:
         form = PlayerForm()
 

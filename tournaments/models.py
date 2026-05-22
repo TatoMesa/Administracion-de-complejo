@@ -57,7 +57,7 @@ class Tournament(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.name} ({self.get_gender_display()} — {self.get_category_display()})"
+        return f"{self.name} ({self.get_gender_display()} - {self.get_category_display()})"
 
     @property
     def total_teams(self):
@@ -116,31 +116,34 @@ class Player(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} — DNI {self.dni}"
+        return f"{self.name} - DNI {self.dni}"
 
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        # Validar que el jugador no esté en otro equipo del mismo torneo
+        try:
+            team = self.team
+        except Exception:
+            return
+
+        tournament = team.tournament
+
         if self.pk is None:
-            tournament = self.team.tournament
             existing = Player.objects.filter(
                 dni=self.dni,
                 team__tournament=tournament,
-            ).exclude(team=self.team)
+            ).exclude(team=team)
             if existing.exists():
                 raise ValidationError(
                     f'El jugador con DNI {self.dni} ya está registrado en otro equipo de este torneo.'
                 )
 
-            # Validar que no se agreguen jugadores si el torneo ya inició
             if tournament.status == 'in_progress' and not self.injury_replacement:
                 raise ValidationError(
                     'No se pueden agregar jugadores a un torneo en curso salvo por lesión grave.'
                 )
 
-            # Validar máximo de jugadores
-            if self.team.total_players >= tournament.max_players:
+            if team.total_players >= tournament.max_players:
                 raise ValidationError(
                     f'El equipo ya tiene el máximo de {tournament.max_players} jugadores.'
                 )
@@ -162,7 +165,7 @@ class Group(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return f"Grupo {self.name} — {self.tournament.name}"
+        return f"Grupo {self.name} - {self.tournament.name}"
 
 
 class Match(models.Model):
@@ -238,7 +241,7 @@ class Match(models.Model):
         ordering = ['date', 'start_time']
 
     def __str__(self):
-        return f"{self.home_team.name} vs {self.away_team.name} — {self.date}"
+        return f"{self.home_team.name} vs {self.away_team.name} - {self.date}"
 
     @property
     def result(self):
@@ -286,7 +289,7 @@ class Standing(models.Model):
         unique_together = ['tournament', 'group', 'team']
 
     def __str__(self):
-        return f"{self.team.name} — {self.tournament.name}"
+        return f"{self.team.name} - {self.tournament.name}"
 
     @property
     def points(self):
