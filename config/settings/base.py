@@ -21,6 +21,7 @@ LOCAL_APPS = [
     'clients',
     'dashboard',
     'theme',
+    'tournaments',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
