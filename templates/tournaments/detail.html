@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">{{ tournament.name }}</h2>
+        <p class="text-base-content/60">
+            {{ tournament.sport.icon }} {{ tournament.sport.name }} —
+            {{ tournament.get_gender_display }} —
+            {{ tournament.get_category_display }} —
+            {{ tournament.get_format_display }}
+        </p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'tournaments:team_create' tournament.pk %}" class="btn btn-sm btn-outline">
+            + Equipo
+        </a>
+        <a href="{% url 'tournaments:edit' tournament.pk %}" class="btn btn-sm btn-ghost">
+            Editar
+        </a>
+        {% if can_generate %}
+        <form method="post" action="{% url 'tournaments:generate_fixture' tournament.pk %}"
+            onsubmit="return confirm('¿Generar fixture? Esta acción no se puede deshacer.')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-success">⚡ Generar fixture</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Equipos -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h3 class="card-title mb-4">
+            Equipos
+            <span class="badge badge-ghost">{{ tournament.total_teams }}</span>
+        </h3>
+        {% if teams %}
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {% for team in teams %}
+            <a href="{% url 'tournaments:team_detail' team.pk %}"
+                class="flex items-center justify-between bg-base-200 rounded-lg px-4 py-3 hover:bg-base-300 transition-colors">
+                <div>
+                    <p class="font-medium">{{ team.name }}</p>
+                    <p class="text-sm text-base-content/60">{{ team.total_players }} jugadores</p>
+                </div>
+                {% if team.is_complete %}
+                    <span class="badge badge-success badge-sm">✅ Lista completa</span>
+                {% else %}
+                    <span class="badge badge-warning badge-sm">⚠️ Incompleta</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-base-content/40 text-sm">No hay equipos registrados.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tabla de posiciones -->
+{% if standings %}
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h3 class="card-title mb-4">Tabla de posiciones</h3>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Equipo</th>
+                        {% if groups %}<th>Grupo</th>{% endif %}
+                        <th>PJ</th>
+                        <th>PG</th>
+                        <th>PE</th>
+                        <th>PP</th>
+                        <th>GF</th>
+                        <th>GC</th>
+                        <th>DIF</th>
+                        <th>PTS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for standing in standings %}
+                    <tr class="hover">
+                        <td>{{ forloop.counter }}</td>
+                        <td class="font-medium">{{ standing.team.name }}</td>
+                        {% if groups %}<td>{{ standing.group.name|default:"—" }}</td>{% endif %}
+                        <td>{{ standing.played }}</td>
+                        <td>{{ standing.won }}</td>
+                        <td>{{ standing.drawn }}</td>
+                        <td>{{ standing.lost }}</td>
+                        <td>{{ standing.goals_for }}</td>
+                        <td>{{ standing.goals_against }}</td>
+                        <td>{{ standing.goal_difference }}</td>
+                        <td class="font-bold text-primary">{{ standing.points }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Fixture -->
+{% if matches %}
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h3 class="card-title mb-4">Fixture</h3>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Fase</th>
+                        {% if groups %}<th>Grupo</th>{% endif %}
+                        <th>Local</th>
+                        <th>Resultado</th>
+                        <th>Visitante</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in matches %}
+                    <tr class="hover">
+                        <td>{{ match.get_stage_display }}</td>
+                        {% if groups %}<td>{{ match.group.name|default:"—" }}</td>{% endif %}
+                        <td class="font-medium">{{ match.home_team.name }}</td>
+                        <td class="font-mono font-bold text-center">
+                            {% if match.home_score is not None %}
+                                {{ match.home_score }} — {{ match.away_score }}
+                            {% else %}
+                                <span class="text-base-content/30">vs</span>
+                            {% endif %}
+                        </td>
+                        <td class="font-medium">{{ match.away_team.name }}</td>
+                        <td>
+                            {% if match.date %}
+                                {{ match.date|date:"d/m" }}
+                                {% if match.start_time %}{{ match.start_time|time:"H:i" }}{% endif %}
+                            {% else %}
+                                <span class="text-base-content/30">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge badge-sm
+                                {% if match.status == 'scheduled' %}badge-ghost
+                                {% elif match.status == 'finished' %}badge-success
+                                {% elif match.status == 'cancelled' %}badge-error
+                                {% else %}badge-warning{% endif %}">
+                                {{ match.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'tournaments:match_result' match.pk %}"
+                                class="btn btn-xs btn-outline">
+                                Resultado
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

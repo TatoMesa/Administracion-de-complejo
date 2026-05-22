@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Cargar resultado{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">Cargar resultado</h2>
+    <p class="text-base-content/60">{{ match.tournament.name }}</p>
+</div>
+
+<div class="card bg-base-100 shadow max-w-md">
+    <div class="card-body">
+
+        <div class="flex items-center justify-between mb-6">
+            <div class="text-center flex-1">
+                <p class="font-bold text-lg">{{ match.home_team.name }}</p>
+                <p class="text-base-content/60 text-sm">Local</p>
+            </div>
+            <div class="text-2xl font-bold text-base-content/40">VS</div>
+            <div class="text-center flex-1">
+                <p class="font-bold text-lg">{{ match.away_team.name }}</p>
+                <p class="text-base-content/60 text-sm">Visitante</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Goles {{ match.home_team.name }}</span>
+                    </label>
+                    {{ form.home_score }}
+                </div>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Goles {{ match.away_team.name }}</span>
+                    </label>
+                    {{ form.away_score }}
+                </div>
+                <div class="form-control col-span-2">
+                    <label class="label"><span class="label-text font-medium">Estado</span></label>
+                    {{ form.status }}
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn btn-primary">Guardar resultado</button>
+                <a href="{% url 'tournaments:detail' match.tournament.pk %}" class="btn btn-ghost">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

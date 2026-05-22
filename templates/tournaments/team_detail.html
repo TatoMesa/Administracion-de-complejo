@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}{{ team.name }}{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">{{ team.name }}</h2>
+        <p class="text-base-content/60">
+            {{ team.tournament.name }} —
+            Contacto: {{ team.contact_name }} ({{ team.contact_phone }})
+        </p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'tournaments:player_create' team.pk %}" class="btn btn-primary btn-sm">
+            + Jugador
+        </a>
+        <a href="{% url 'tournaments:detail' team.tournament.pk %}" class="btn btn-ghost btn-sm">
+            Volver
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-3 gap-4 mb-6">
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Jugadores activos</p>
+            <p class="text-3xl font-bold text-primary">{{ team.total_players }}</p>
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Mínimo requerido</p>
+            <p class="text-3xl font-bold">{{ team.tournament.min_players }}</p>
+        </div>
+    </div>
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <p class="text-base-content/60 text-sm">Lista</p>
+            <p class="text-xl font-bold {% if team.is_complete %}text-success{% else %}text-error{% endif %}">
+                {% if team.is_complete %}Completa ✅{% else %}Incompleta ⚠️{% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de jugadores -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body p-0">
+        {% if players %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nombre</th>
+                        <th>DNI</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in players %}
+                    <tr class="hover">
+                        <td>{{ forloop.counter }}</td>
+                        <td class="font-medium">
+                            {{ player.name }}
+                            {% if player.injury_replacement %}
+                                <span class="badge badge-warning badge-sm ml-1">Reemplazo</span>
+                            {% endif %}
+                        </td>
+                        <td class="font-mono">{{ player.dni }}</td>
+                        <td>
+                            {% if player.is_active %}
+                                <span class="badge badge-success badge-sm">Habilitado</span>
+                            {% else %}
+                                <span class="badge badge-error badge-sm">Suspendido</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'tournaments:player_toggle' player.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-xs btn-outline">
+                                    {% if player.is_active %}Suspender{% else %}Habilitar{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-base-content/40">
+            <p class="text-4xl mb-2">👤</p>
+            <p>No hay jugadores registrados</p>
+            <a href="{% url 'tournaments:player_create' team.pk %}"
+                class="btn btn-primary btn-sm mt-4">Agregar jugador</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

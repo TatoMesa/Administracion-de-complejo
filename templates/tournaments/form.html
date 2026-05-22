@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">{{ title }}</h2>
+</div>
+
+<div class="card bg-base-100 shadow max-w-2xl">
+    <div class="card-body">
+        {% if form.errors %}
+        <div class="alert alert-error mb-4">
+            {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Nombre</span></label>
+                    {{ form.name }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Deporte</span></label>
+                    {{ form.sport }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Formato</span></label>
+                    {{ form.format }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Género</span></label>
+                    {{ form.gender }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Categoría</span></label>
+                    {{ form.category }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Estado</span></label>
+                    {{ form.status }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Fecha de inicio</span></label>
+                    {{ form.start_date }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Mínimo jugadores</span></label>
+                    {{ form.min_players }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Máximo jugadores</span></label>
+                    {{ form.max_players }}
+                </div>
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Cancha principal</span></label>
+                    {{ form.resource }}
+                </div>
+                <div class="form-control md:col-span-2">
+                    <label class="label"><span class="label-text font-medium">Notas</span></label>
+                    {{ form.notes }}
+                </div>
+
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'tournaments:list' %}" class="btn btn-ghost">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

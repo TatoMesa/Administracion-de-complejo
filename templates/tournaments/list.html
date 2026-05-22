@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Torneos{% endblock %}
+
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h2 class="text-2xl font-bold">Torneos</h2>
+        <p class="text-base-content/60">Gestión de torneos del complejo</p>
+    </div>
+    <a href="{% url 'tournaments:create' %}" class="btn btn-primary">+ Nuevo torneo</a>
+</div>
+
+{% if tournaments %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {% for tournament in tournaments %}
+    <div class="card bg-base-100 shadow hover:shadow-md transition-shadow">
+        <div class="card-body">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h3 class="card-title text-lg">{{ tournament.name }}</h3>
+                    <p class="text-base-content/60 text-sm">
+                        {{ tournament.sport.icon }} {{ tournament.sport.name }}
+                    </p>
+                </div>
+                <span class="badge
+                    {% if tournament.status == 'draft' %}badge-ghost
+                    {% elif tournament.status == 'open' %}badge-info
+                    {% elif tournament.status == 'in_progress' %}badge-success
+                    {% else %}badge-neutral{% endif %}">
+                    {{ tournament.get_status_display }}
+                </span>
+            </div>
+
+            <div class="divider my-2"></div>
+
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                    <span class="text-base-content/60">Formato:</span>
+                    <span class="font-medium">{{ tournament.get_format_display }}</span>
+                </div>
+                <div>
+                    <span class="text-base-content/60">Género:</span>
+                    <span class="font-medium">{{ tournament.get_gender_display }}</span>
+                </div>
+                <div>
+                    <span class="text-base-content/60">Categoría:</span>
+                    <span class="font-medium">{{ tournament.get_category_display }}</span>
+                </div>
+                <div>
+                    <span class="text-base-content/60">Equipos:</span>
+                    <span class="font-medium">{{ tournament.total_teams }}</span>
+                </div>
+            </div>
+
+            {% if tournament.start_date %}
+            <p class="text-sm text-base-content/60 mt-1">
+                📅 Inicio: {{ tournament.start_date|date:"d/m/Y" }}
+            </p>
+            {% endif %}
+
+            <div class="card-actions justify-end mt-4">
+                <a href="{% url 'tournaments:detail' tournament.pk %}"
+                    class="btn btn-sm btn-primary">Ver detalle</a>
+                <a href="{% url 'tournaments:edit' tournament.pk %}"
+                    class="btn btn-sm btn-outline">Editar</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-16 text-base-content/40">
+    <p class="text-5xl mb-4">🏆</p>
+    <p class="text-lg">No hay torneos creados</p>
+    <a href="{% url 'tournaments:create' %}" class="btn btn-primary btn-sm mt-4">
+        Crear primer torneo
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

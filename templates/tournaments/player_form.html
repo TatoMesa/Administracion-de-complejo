@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">{{ title }}</h2>
+    <p class="text-base-content/60">{{ team.name }} — {{ tournament.name }}</p>
+</div>
+
+<div class="card bg-base-100 shadow max-w-lg">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex flex-col gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Nombre completo</span></label>
+                    {{ form.name }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">DNI</span></label>
+                    {{ form.dni }}
+                </div>
+                {% if tournament.status == 'in_progress' %}
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        {{ form.injury_replacement }}
+                        <span class="label-text font-medium">Reemplazo por lesión grave</span>
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'tournaments:team_detail' team.pk %}" class="btn btn-ghost">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
