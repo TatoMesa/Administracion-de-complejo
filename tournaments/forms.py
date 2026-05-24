@@ -1,12 +1,12 @@
 from django import forms
-from .models import Tournament, Team, Player, Match
+from .models import Tournament, Team, Player, Match, MatchEvent
 
 
 class TournamentForm(forms.ModelForm):
     class Meta:
         model = Tournament
         fields = ['name', 'sport', 'format', 'gender', 'category', 'status',
-                  'min_players', 'max_players', 'start_date', 'resource', 'notes']
+                  'min_players', 'max_players', 'veteran_min_age', 'yellow_cards_suspension', 'start_date', 'resource', 'notes']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'sport': forms.Select(attrs={'class': 'select select-bordered w-full'}),
@@ -14,6 +14,8 @@ class TournamentForm(forms.ModelForm):
             'gender': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'category': forms.Select(attrs={'class': 'select select-bordered w-full'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'veteran_min_age': forms.NumberInput(attrs={'class': 'input input-bordered w-full'}),
+            'yellow_cards_suspension': forms.NumberInput(attrs={'class': 'input input-bordered w-full'}),
             'min_players': forms.NumberInput(attrs={'class': 'input input-bordered w-full'}),
             'max_players': forms.NumberInput(attrs={'class': 'input input-bordered w-full'}),
             'start_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
@@ -42,10 +44,11 @@ class TeamForm(forms.ModelForm):
 class PlayerForm(forms.ModelForm):
     class Meta:
         model = Player
-        fields = ['name', 'dni', 'injury_replacement']
+        fields = ['name', 'dni', 'birth_date', 'injury_replacement']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
             'dni': forms.TextInput(attrs={'class': 'input input-bordered w-full'}),
+            'birth_date': forms.DateInput(attrs={'class': 'input input-bordered w-full', 'type': 'date'}),
             'injury_replacement': forms.CheckboxInput(attrs={'class': 'checkbox'}),
         }
 
@@ -59,3 +62,36 @@ class MatchResultForm(forms.ModelForm):
             'away_score': forms.NumberInput(attrs={'class': 'input input-bordered w-full'}),
             'status': forms.Select(attrs={'class': 'select select-bordered w-full'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        home_score = cleaned_data.get('home_score')
+        away_score = cleaned_data.get('away_score')
+
+        if status == 'finished':
+            if home_score is None or away_score is None:
+                raise forms.ValidationError(
+                    'Debés ingresar los goles de ambos equipos para marcar el partido como finalizado.'
+                )
+        return cleaned_data
+class MatchEventForm(forms.ModelForm):
+    class Meta:
+        model = MatchEvent
+        fields = ['player', 'event_type', 'minute']
+        widgets = {
+            'player': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'event_type': forms.Select(attrs={'class': 'select select-bordered w-full'}),
+            'minute': forms.NumberInput(attrs={'class': 'input input-bordered w-full'}),
+        }
+
+    def __init__(self, *args, match=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if match:
+            self.fields['player'].queryset = Player.objects.filter(
+                team__in=[match.home_team, match.away_team],
+                is_active=True
+            ).order_by('team__name', 'name')
+        else:
+            self.fields['player'].queryset = Player.objects.none()
+        self.fields['minute'].required = False

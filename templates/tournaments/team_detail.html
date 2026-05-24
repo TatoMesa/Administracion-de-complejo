@@ -56,6 +56,7 @@
                         <th>#</th>
                         <th>Nombre</th>
                         <th>DNI</th>
+                        <th>Nacimiento</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -71,6 +72,7 @@
                             {% endif %}
                         </td>
                         <td class="font-mono">{{ player.dni }}</td>
+                        <td>{{ player.birth_date|date:"d/m/Y" }}</td>
                         <td>
                             {% if player.is_active %}
                                 <span class="badge badge-success badge-sm">Habilitado</span>

@@ -4,6 +4,9 @@ from .models import Tournament, Team, Player, Group, Match, Standing
 from .forms import TournamentForm, TeamForm, PlayerForm, MatchResultForm
 import itertools
 import random
+from django.db.models import Count
+from .models import Tournament, Team, Player, Group, Match, Standing, MatchEvent
+from .forms import TournamentForm, TeamForm, PlayerForm, MatchResultForm, MatchEventForm
 
 
 def tournament_list(request):
@@ -49,15 +52,43 @@ def tournament_detail(request, pk):
         key=lambda s: (-s.points, -s.goal_difference, -s.goals_for)
     )
 
+    # Goleadores
+    scorers = MatchEvent.objects.filter(
+        match__tournament=tournament,
+        event_type='goal'
+    ).values('player__name', 'player__team__name').annotate(
+        total=Count('id')
+    ).order_by('-total')[:10]
+
+    # Tarjetas amarillas
+    yellow_cards = MatchEvent.objects.filter(
+        match__tournament=tournament,
+        event_type='yellow'
+    ).values('player__name', 'player__team__name').annotate(
+        total=Count('id')
+    ).order_by('-total')[:10]
+
+    # Tarjetas rojas
+    red_cards = MatchEvent.objects.filter(
+        match__tournament=tournament,
+        event_type='red'
+    ).values('player__name', 'player__team__name').annotate(
+        total=Count('id')
+    ).order_by('-total')[:10]
+
     groups = tournament.groups.prefetch_related('teams', 'standings')
 
     context = {
         'tournament': tournament,
         'teams': teams,
         'matches': matches,
+        'scorers': scorers,
+        'yellow_cards': yellow_cards,
+        'red_cards': red_cards,
         'standings': standings,
         'groups': groups,
         'can_generate': tournament.teams.count() >= 2 and not tournament.matches.exists(),
+        
     }
     return render(request, 'tournaments/detail.html', context)
 
@@ -219,10 +250,11 @@ def _generate_groups(tournament, teams):
 
 def match_result(request, pk):
     match = get_object_or_404(Match, pk=pk)
+    events = match.events.select_related('player', 'player__team').order_by('minute')
+
     if request.method == 'POST':
         form = MatchResultForm(request.POST, instance=match)
         if form.is_valid():
-            # Leer valores anteriores directo de DB antes de guardar
             old = Match.objects.get(pk=pk)
             old_status = old.status
             old_home_score = old.home_score
@@ -236,18 +268,23 @@ def match_result(request, pk):
                 _update_standings(match)
                 messages.success(request, 'Resultado guardado y tabla actualizada.')
             else:
-                # Si cambia de finished a otro estado, revertir
                 if old_status == 'finished' and old_home_score is not None:
                     _revert_standings(match, old_home_score, old_away_score)
                 messages.success(request, 'Resultado guardado.')
 
             return redirect('tournaments:detail', pk=match.tournament.pk)
     else:
+        match_fresh = Match.objects.get(pk=pk)
         form = MatchResultForm(instance=match)
+
+    # Siempre inicializar event_form con match
+    event_form = MatchEventForm(match=match)
 
     return render(request, 'tournaments/match_result.html', {
         'form': form,
         'match': match,
+        'events': events,
+        'event_form': event_form,
     })
 
 def _revert_standings(match, home_score, away_score):
@@ -319,3 +356,59 @@ def _update_standings(match):
 
     home_standing.save()
     away_standing.save()
+
+def match_event_create(request, pk):
+    match = get_object_or_404(Match, pk=pk)
+    if request.method == 'POST':
+        form = MatchEventForm(match=match, data=request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.match = match
+            event.save()
+
+            # Verificar suspension por amarillas acumuladas
+            if event.event_type == 'yellow':
+                _check_yellow_suspension(event.player, match.tournament)
+
+            # Suspension inmediata por roja
+            if event.event_type == 'red':
+                event.player.is_active = False
+                event.player.save()
+                messages.warning(
+                    request,
+                    f'{event.player.name} suspendido por tarjeta roja.'
+                )
+            else:
+                messages.success(request, 'Evento registrado.')
+
+            return redirect('tournaments:match_result', pk=match.pk)
+    else:
+        form = MatchEventForm(match=match)
+
+    return render(request, 'tournaments/match_event_form.html', {
+        'form': form,
+        'match': match,
+    })
+
+
+def match_event_delete(request, pk):
+    event = get_object_or_404(MatchEvent, pk=pk)
+    match_pk = event.match.pk
+    if request.method == 'POST':
+        event.delete()
+        messages.success(request, 'Evento eliminado.')
+    return redirect('tournaments:match_result', pk=match_pk)
+
+
+def _check_yellow_suspension(player, tournament):
+    yellow_count = MatchEvent.objects.filter(
+        player=player,
+        event_type='yellow',
+        match__tournament=tournament
+    ).count()
+
+    if yellow_count >= tournament.yellow_cards_suspension:
+        player.is_active = False
+        player.save()
+        return True
+    return False

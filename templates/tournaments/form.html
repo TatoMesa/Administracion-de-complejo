@@ -14,6 +14,11 @@
             {% for error in form.non_field_errors %}
                 <span>{{ error }}</span>
             {% endfor %}
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <span><strong>{{ field.label }}:</strong> {{ error }}</span>
+                {% endfor %}
+            {% endfor %}
         </div>
         {% endif %}
 
@@ -40,6 +45,14 @@
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Categoría</span></label>
                     {{ form.category }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Edad mínima veteranos</span></label>
+                    {{ form.veteran_min_age }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Amarillas para suspensión</span></label>
+                    {{ form.yellow_cards_suspension }}
                 </div>
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Estado</span></label>

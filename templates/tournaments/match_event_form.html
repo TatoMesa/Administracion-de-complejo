@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Agregar evento{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">Agregar evento</h2>
+    <p class="text-base-content/60">
+        {{ match.home_team.name }} vs {{ match.away_team.name }}
+    </p>
+</div>
+
+<div class="card bg-base-100 shadow max-w-md">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex flex-col gap-4">
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Jugador</span></label>
+                    {{ form.player }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Evento</span></label>
+                    {{ form.event_type }}
+                </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Minuto</span></label>
+                    {{ form.minute }}
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'tournaments:match_result' match.pk %}" class="btn btn-ghost">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

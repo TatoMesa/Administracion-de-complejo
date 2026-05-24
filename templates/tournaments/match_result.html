@@ -1,56 +1,120 @@
 {% extends 'base.html' %}
-{% block title %}Cargar resultado{% endblock %}
+{% block title %}Resultado — {{ match.home_team.name }} vs {{ match.away_team.name }}{% endblock %}
 
 {% block content %}
 
 <div class="mb-6">
-    <h2 class="text-2xl font-bold">Cargar resultado</h2>
-    <p class="text-base-content/60">{{ match.tournament.name }}</p>
+    <h2 class="text-2xl font-bold">Partido</h2>
+    <p class="text-base-content/60">{{ match.tournament.name }} — {{ match.get_stage_display }}</p>
 </div>
 
-<div class="card bg-base-100 shadow max-w-md">
-    <div class="card-body">
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
-        <div class="flex items-center justify-between mb-6">
-            <div class="text-center flex-1">
-                <p class="font-bold text-lg">{{ match.home_team.name }}</p>
-                <p class="text-base-content/60 text-sm">Local</p>
+    <!-- Formulario resultado -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Resultado</h3>
+
+            <div class="flex items-center justify-between mb-6">
+                <div class="text-center flex-1">
+                    <p class="font-bold text-lg">{{ match.home_team.name }}</p>
+                    <p class="text-base-content/60 text-sm">Local</p>
+                </div>
+                <div class="text-2xl font-bold text-base-content/40">VS</div>
+                <div class="text-center flex-1">
+                    <p class="font-bold text-lg">{{ match.away_team.name }}</p>
+                    <p class="text-base-content/60 text-sm">Visitante</p>
+                </div>
             </div>
-            <div class="text-2xl font-bold text-base-content/40">VS</div>
-            <div class="text-center flex-1">
-                <p class="font-bold text-lg">{{ match.away_team.name }}</p>
-                <p class="text-base-content/60 text-sm">Visitante</p>
-            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="alert alert-error mb-4">
+                    {% for error in form.non_field_errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <span><strong>{{ field.label }}:</strong> {{ error }}</span>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Goles {{ match.home_team.name }}</span>
+                        </label>
+                        {{ form.home_score }}
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Goles {{ match.away_team.name }}</span>
+                        </label>
+                        {{ form.away_score }}
+                    </div>
+                    <div class="form-control col-span-2">
+                        <label class="label"><span class="label-text font-medium">Estado</span></label>
+                        {{ form.status }}
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-primary">Guardar resultado</button>
+                    <a href="{% url 'tournaments:detail' match.tournament.pk %}" class="btn btn-ghost">
+                        Volver
+                    </a>
+                </div>
+            </form>
         </div>
-
-        <form method="post">
-            {% csrf_token %}
-            <div class="grid grid-cols-2 gap-4">
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium">Goles {{ match.home_team.name }}</span>
-                    </label>
-                    {{ form.home_score }}
-                </div>
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-medium">Goles {{ match.away_team.name }}</span>
-                    </label>
-                    {{ form.away_score }}
-                </div>
-                <div class="form-control col-span-2">
-                    <label class="label"><span class="label-text font-medium">Estado</span></label>
-                    {{ form.status }}
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button type="submit" class="btn btn-primary">Guardar resultado</button>
-                <a href="{% url 'tournaments:detail' match.tournament.pk %}" class="btn btn-ghost">
-                    Cancelar
-                </a>
-            </div>
-        </form>
     </div>
+
+    <!-- Eventos del partido -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="card-title">Eventos</h3>
+                <a href="{% url 'tournaments:match_event_create' match.pk %}"
+                    class="btn btn-sm btn-outline btn-primary">+ Agregar</a>
+            </div>
+
+            {% if events %}
+            <div class="space-y-2">
+                {% for event in events %}
+                <div class="flex items-center justify-between bg-base-200 rounded-lg px-4 py-2">
+                    <div class="flex items-center gap-3">
+                        {% if event.event_type == 'goal' %}
+                            <span class="text-xl">⚽</span>
+                        {% elif event.event_type == 'yellow' %}
+                            <span class="text-xl">🟨</span>
+                        {% else %}
+                            <span class="text-xl">🟥</span>
+                        {% endif %}
+                        <div>
+                            <p class="font-medium text-sm">{{ event.player.name }}</p>
+                            <p class="text-xs text-base-content/60">
+                                {{ event.player.team.name }}
+                                {% if event.minute %}· min {{ event.minute }}{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <form method="post" action="{% url 'tournaments:match_event_delete' event.pk %}"
+                        onsubmit="return confirm('¿Eliminar evento?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-xs btn-error btn-outline">✕</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-base-content/40 text-sm text-center py-6">
+                No hay eventos registrados
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
+
 
 {% endblock %}

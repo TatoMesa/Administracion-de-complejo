@@ -21,6 +21,10 @@
                     <label class="label"><span class="label-text font-medium">DNI</span></label>
                     {{ form.dni }}
                 </div>
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Fecha de nacimiento</span></label>
+                    {{ form.birth_date }}
+                </div>
                 {% if tournament.status == 'in_progress' %}
                 <div class="form-control">
                     <label class="label cursor-pointer justify-start gap-3">

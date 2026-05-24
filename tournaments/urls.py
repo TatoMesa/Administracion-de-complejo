@@ -14,4 +14,6 @@ urlpatterns = [
     path('jugadores/<int:pk>/toggle/', views.player_toggle, name='player_toggle'),
     path('<int:pk>/generar-fixture/', views.generate_fixture, name='generate_fixture'),
     path('partidos/<int:pk>/resultado/', views.match_result, name='match_result'),
+    path('partidos/<int:pk>/evento/nuevo/', views.match_event_create, name='match_event_create'),
+    path('eventos/<int:pk>/eliminar/', views.match_event_delete, name='match_event_delete'),
 ]

@@ -1,5 +1,7 @@
 from django.db import models
 from resources.models import Resource, Sport
+from django.core.exceptions import ValidationError
+
 
 
 class Tournament(models.Model):
@@ -40,6 +42,14 @@ class Tournament(models.Model):
     )
     min_players = models.PositiveIntegerField(default=5, verbose_name='Mínimo de jugadores')
     max_players = models.PositiveIntegerField(default=15, verbose_name='Máximo de jugadores')
+    veteran_min_age = models.PositiveIntegerField(
+        default=38,
+        verbose_name='Edad mínima veteranos'
+    )
+    yellow_cards_suspension = models.PositiveIntegerField(
+        default=3,
+        verbose_name='Amarillas para suspensión'
+    )
     start_date = models.DateField(null=True, blank=True, verbose_name='Fecha de inicio')
     resource = models.ForeignKey(
         Resource,
@@ -103,6 +113,7 @@ class Player(models.Model):
     )
     name = models.CharField(max_length=200, verbose_name='Nombre completo')
     dni = models.CharField(max_length=20, verbose_name='DNI')
+    birth_date = models.DateField(verbose_name='Fecha de nacimiento')
     is_active = models.BooleanField(default=True, verbose_name='Habilitado')
     injury_replacement = models.BooleanField(
         default=False,
@@ -119,8 +130,7 @@ class Player(models.Model):
         return f"{self.name} - DNI {self.dni}"
 
     def clean(self):
-        from django.core.exceptions import ValidationError
-
+    
         try:
             team = self.team
         except Exception:
@@ -129,6 +139,17 @@ class Player(models.Model):
         tournament = team.tournament
 
         if self.pk is None:
+            # Validar DNI duplicado en el mismo equipo
+            duplicate = Player.objects.filter(
+                dni=self.dni,
+                team=team
+            ).exists()
+            if duplicate:
+                raise ValidationError(
+                    f'El jugador con DNI {self.dni} ya está registrado en este equipo.'
+                )
+
+            # Validar que el jugador no esté en otro equipo del mismo torneo
             existing = Player.objects.filter(
                 dni=self.dni,
                 team__tournament=tournament,
@@ -138,15 +159,30 @@ class Player(models.Model):
                     f'El jugador con DNI {self.dni} ya está registrado en otro equipo de este torneo.'
                 )
 
+            # Validar que no se agreguen jugadores si el torneo ya inició
             if tournament.status == 'in_progress' and not self.injury_replacement:
                 raise ValidationError(
                     'No se pueden agregar jugadores a un torneo en curso salvo por lesión grave.'
                 )
 
+            # Validar máximo de jugadores
             if team.total_players >= tournament.max_players:
                 raise ValidationError(
                     f'El equipo ya tiene el máximo de {tournament.max_players} jugadores.'
                 )
+
+            # Validar edad para categoria veteranos
+            if tournament.category == 'veteranos' and self.birth_date:
+                from django.utils import timezone
+                today = timezone.now().date()
+                age = today.year - self.birth_date.year - (
+                    (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
+                )
+                if age < tournament.veteran_min_age:
+                    raise ValidationError(
+                        f'El jugador debe tener al menos {tournament.veteran_min_age} años '
+                        f'para la categoría veteranos. {self.name} tiene {age} años.'
+                    )
 
 
 class Group(models.Model):
@@ -298,3 +334,40 @@ class Standing(models.Model):
     @property
     def goal_difference(self):
         return self.goals_for - self.goals_against
+
+class MatchEvent(models.Model):
+    EVENT_CHOICES = [
+        ('goal', 'Gol'),
+        ('yellow', 'Tarjeta amarilla'),
+        ('red', 'Tarjeta roja'),
+    ]
+
+    match = models.ForeignKey(
+        Match,
+        on_delete=models.CASCADE,
+        related_name='events',
+        verbose_name='Partido'
+    )
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name='events',
+        verbose_name='Jugador'
+    )
+    event_type = models.CharField(
+        max_length=10,
+        choices=EVENT_CHOICES,
+        verbose_name='Tipo de evento'
+    )
+    minute = models.PositiveIntegerField(
+        null=True, blank=True,
+        verbose_name='Minuto'
+    )
+
+    class Meta:
+        verbose_name = 'Evento de partido'
+        verbose_name_plural = 'Eventos de partido'
+        ordering = ['minute']
+
+    def __str__(self):
+        return f"{self.get_event_type_display()} — {self.player.name} ({self.match})"

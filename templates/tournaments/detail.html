@@ -169,5 +169,83 @@
     </div>
 </div>
 {% endif %}
+<!-- Estadisticas -->
+{% if scorers or yellow_cards or red_cards %}
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+
+    <!-- Goleadores -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-lg mb-3">⚽ Goleadores</h3>
+            {% if scorers %}
+            <table class="table table-sm">
+                <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>G</th></tr></thead>
+                <tbody>
+                    {% for s in scorers %}
+                    <tr class="hover">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ s.player__name }}</td>
+                        <td class="text-xs text-base-content/60">{{ s.player__team__name }}</td>
+                        <td class="font-bold text-primary">{{ s.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-base-content/40 text-sm">Sin goles registrados</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Amarillas -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-lg mb-3">🟨 Tarjetas amarillas</h3>
+            {% if yellow_cards %}
+            <table class="table table-sm">
+                <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>TA</th></tr></thead>
+                <tbody>
+                    {% for y in yellow_cards %}
+                    <tr class="hover">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ y.player__name }}</td>
+                        <td class="text-xs text-base-content/60">{{ y.player__team__name }}</td>
+                        <td class="font-bold text-warning">{{ y.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-base-content/40 text-sm">Sin tarjetas registradas</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Rojas -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-lg mb-3">🟥 Tarjetas rojas</h3>
+            {% if red_cards %}
+            <table class="table table-sm">
+                <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>TR</th></tr></thead>
+                <tbody>
+                    {% for r in red_cards %}
+                    <tr class="hover">
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ r.player__name }}</td>
+                        <td class="text-xs text-base-content/60">{{ r.player__team__name }}</td>
+                        <td class="font-bold text-error">{{ r.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-base-content/40 text-sm">Sin tarjetas registradas</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endif %}
 
 {% endblock %}
