@@ -6,6 +6,23 @@
 <div class="flex items-center justify-between mb-6">
     <div>
         <h2 class="text-2xl font-bold">{{ tournament.name }}</h2>
+        {% if tournament.champion %}
+        <div class="alert bg-yellow-50 border border-yellow-300 mb-6">
+            <div class="flex items-center gap-4">
+                <span class="text-4xl">🏆</span>
+                <div>
+                    <p class="font-bold text-lg text-yellow-800">
+                        ¡Campeón: {{ tournament.champion.name }}!
+                    </p>
+                    {% if tournament.runner_up %}
+                    <p class="text-yellow-700">
+                        Subcampeón: {{ tournament.runner_up.name }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
         <p class="text-base-content/60">
             {{ tournament.sport.icon }} {{ tournament.sport.name }} —
             {{ tournament.get_gender_display }} —
@@ -20,11 +37,17 @@
         <a href="{% url 'tournaments:edit' tournament.pk %}" class="btn btn-sm btn-ghost">
             Editar
         </a>
-        {% if can_generate %}
+        {% if tournament.status != 'finished' and tournament.teams.count >= 2 %}
         <form method="post" action="{% url 'tournaments:generate_fixture' tournament.pk %}"
-            onsubmit="return confirm('¿Generar fixture? Esta acción no se puede deshacer.')">
+            onsubmit="return confirm('{% if tournament.matches.exists %}ATENCIÓN: Esto borrará todos los partidos y resultados existentes. ¿Confirmás la regeneración del fixture?{% else %}¿Generar fixture?{% endif %}')">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-success">⚡ Generar fixture</button>
+            <button type="submit" class="btn btn-sm btn-success">
+                {% if tournament.matches.exists %}
+                    🔄 Regenerar fixture
+                {% else %}
+                    ⚡ Generar fixture
+                {% endif %}
+            </button>
         </form>
         {% endif %}
     </div>
@@ -65,42 +88,85 @@
 <div class="card bg-base-100 shadow mb-6">
     <div class="card-body">
         <h3 class="card-title mb-4">Tabla de posiciones</h3>
-        <div class="overflow-x-auto">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Equipo</th>
-                        {% if groups %}<th>Grupo</th>{% endif %}
-                        <th>PJ</th>
-                        <th>PG</th>
-                        <th>PE</th>
-                        <th>PP</th>
-                        <th>GF</th>
-                        <th>GC</th>
-                        <th>DIF</th>
-                        <th>PTS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for standing in standings %}
-                    <tr class="hover">
-                        <td>{{ forloop.counter }}</td>
-                        <td class="font-medium">{{ standing.team.name }}</td>
-                        {% if groups %}<td>{{ standing.group.name|default:"—" }}</td>{% endif %}
-                        <td>{{ standing.played }}</td>
-                        <td>{{ standing.won }}</td>
-                        <td>{{ standing.drawn }}</td>
-                        <td>{{ standing.lost }}</td>
-                        <td>{{ standing.goals_for }}</td>
-                        <td>{{ standing.goals_against }}</td>
-                        <td>{{ standing.goal_difference }}</td>
-                        <td class="font-bold text-primary">{{ standing.points }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+
+        {% if tournament.format == 'groups_elimination' and groups %}
+            {% for group in groups %}
+            <h4 class="font-bold text-base mb-2 mt-4">Grupo {{ group.name }}</h4>
+            <div class="overflow-x-auto mb-4">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Equipo</th>
+                            <th>PJ</th>
+                            <th>PG</th>
+                            <th>PE</th>
+                            <th>PP</th>
+                            <th>GF</th>
+                            <th>GC</th>
+                            <th>DIF</th>
+                            <th>PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% with group_standings=group.standings.all %}
+                        {% for standing in group_standings|dictsortreversed:"points" %}
+                        <tr class="hover {% if forloop.counter <= 2 %}bg-success/10{% endif %}">
+                            <td>{{ forloop.counter }}</td>
+                            <td class="font-medium">{{ standing.team.name }}</td>
+                            <td>{{ standing.played }}</td>
+                            <td>{{ standing.won }}</td>
+                            <td>{{ standing.drawn }}</td>
+                            <td>{{ standing.lost }}</td>
+                            <td>{{ standing.goals_for }}</td>
+                            <td>{{ standing.goals_against }}</td>
+                            <td>{{ standing.goal_difference }}</td>
+                            <td class="font-bold text-primary">{{ standing.points }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% endwith %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Equipo</th>
+                            <th>PJ</th>
+                            <th>PG</th>
+                            <th>PE</th>
+                            <th>PP</th>
+                            <th>GF</th>
+                            <th>GC</th>
+                            <th>DIF</th>
+                            <th>PTS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for standing in standings %}
+                        <tr class="hover">
+                            <td>{{ forloop.counter }}</td>
+                            <td class="font-medium">{{ standing.team.name }}</td>
+                            <td>{{ standing.played }}</td>
+                            <td>{{ standing.won }}</td>
+                            <td>{{ standing.drawn }}</td>
+                            <td>{{ standing.lost }}</td>
+                            <td>{{ standing.goals_for }}</td>
+                            <td>{{ standing.goals_against }}</td>
+                            <td>{{ standing.goal_difference }}</td>
+                            <td class="font-bold text-primary">{{ standing.points }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
     </div>
 </div>
 {% endif %}

@@ -61,6 +61,23 @@ class Tournament(models.Model):
     notes = models.TextField(blank=True, verbose_name='Notas')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    champion = models.ForeignKey(
+        'Team',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='champion_tournaments',
+        verbose_name='Campeón'
+    )
+    runner_up = models.ForeignKey(
+        'Team',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='runner_up_tournaments',
+        verbose_name='Subcampeón'
+    )
+
     class Meta:
         verbose_name = 'Torneo'
         verbose_name_plural = 'Torneos'
