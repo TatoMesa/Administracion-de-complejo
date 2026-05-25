@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Historial de Torneos{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <h2 class="text-2xl font-bold">Historial de Torneos</h2>
+    <p class="text-base-content/60">Torneos finalizados y sus campeones</p>
+</div>
+
+{% if tournaments %}
+<div class="card bg-base-100 shadow">
+    <div class="card-body p-0">
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Torneo</th>
+                        <th>Deporte</th>
+                        <th>Género</th>
+                        <th>Categoría</th>
+                        <th>Fecha</th>
+                        <th>🏆 Campeón</th>
+                        <th>🥈 Subcampeón</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tournament in tournaments %}
+                    <tr class="hover">
+                        <td class="font-medium">{{ tournament.name }}</td>
+                        <td>{{ tournament.sport.icon }} {{ tournament.sport.name }}</td>
+                        <td>{{ tournament.get_gender_display }}</td>
+                        <td>{{ tournament.get_category_display }}</td>
+                        <td>{{ tournament.start_date|date:"d/m/Y"|default:"—" }}</td>
+                        <td>
+                            {% if tournament.champion %}
+                                <span class="font-bold text-yellow-600">
+                                    🏆 {{ tournament.champion.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-base-content/30">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if tournament.runner_up %}
+                                <span class="font-medium">
+                                    🥈 {{ tournament.runner_up.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-base-content/30">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'tournaments:detail' tournament.pk %}"
+                                class="btn btn-xs btn-outline">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-16 text-base-content/40">
+    <p class="text-5xl mb-4">🏆</p>
+    <p class="text-lg">No hay torneos finalizados todavía</p>
+</div>
+{% endif %}
+
+{% endblock %}

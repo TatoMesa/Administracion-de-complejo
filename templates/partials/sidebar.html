@@ -25,7 +25,7 @@
         <li class="menu-title mt-2">Reservas</li>
         <li>
             <a href="{% url 'bookings:list' %}"
-                class="{% if request.resolver_match.namespace == 'bookings' %}bg-primary text-primary-content font-semibold{% endif %}">
+                class="{% if request.resolver_match.namespace == 'bookings' and request.resolver_match.url_name != 'history' %}bg-primary text-primary-content font-semibold{% endif %}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -34,11 +34,22 @@
                 Reservas
             </a>
         </li>
+        <li>
+            <a href="{% url 'bookings:history' %}"
+                class="{% if request.resolver_match.namespace == 'bookings' and request.resolver_match.url_name == 'history' %}bg-primary text-primary-content font-semibold{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Historial de Reservas
+            </a>
+        </li>
 
-        <li class="menu-title mt-2">Gestión</li>
+        <li class="menu-title mt-2">Torneos</li>
         <li>
             <a href="{% url 'tournaments:list' %}"
-                class="{% if request.resolver_match.namespace == 'tournaments' %}bg-primary text-primary-content font-semibold{% endif %}">
+                class="{% if request.resolver_match.namespace == 'tournaments' and request.resolver_match.url_name != 'history' %}bg-primary text-primary-content font-semibold{% endif %}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -47,6 +58,19 @@
                 Torneos
             </a>
         </li>
+        <li>
+            <a href="{% url 'tournaments:history' %}"
+                class="{% if request.resolver_match.namespace == 'tournaments' and request.resolver_match.url_name == 'history' %}bg-primary text-primary-content font-semibold{% endif %}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Historial de Campeones
+            </a>
+        </li>
+
+        <li class="menu-title mt-2">Gestión</li>
         <li>
             <a href="{% url 'resources:list' %}"
                 class="{% if request.resolver_match.namespace == 'resources' %}bg-primary text-primary-content font-semibold{% endif %}">
@@ -78,17 +102,6 @@
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Disponibilidad
-            </a>
-        </li>
-        <li>
-            <a href="{% url 'bookings:history' %}"
-                class="{% if request.resolver_match.url_name == 'history' %}bg-primary text-primary-content font-semibold{% endif %}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                Historial de Reservas
             </a>
         </li>
 

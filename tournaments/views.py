@@ -651,3 +651,12 @@ def _check_next_stage(tournament):
                 return True
 
     return False       
+
+def tournament_history(request):
+    tournaments = Tournament.objects.filter(
+        status='finished'
+    ).select_related(
+        'sport', 'champion', 'runner_up'
+    ).order_by('-start_date')
+
+    return render(request, 'tournaments/history.html', {'tournaments': tournaments})
