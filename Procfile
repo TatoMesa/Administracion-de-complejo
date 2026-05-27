@@ -1,2 +1,2 @@
 web: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
-release: python manage.py migrate
+release: python manage.py migrate && python manage.py shell -c "from django.contrib.auth.models import User; User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@admin.com', '${{ADMIN_PASSWORD}}')"
