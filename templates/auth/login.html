@@ -1,0 +1,55 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión — Complejo Deportivo</title>
+    {% tailwind_css %}
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-base-200 min-h-screen flex items-center justify-center">
+
+    <div class="card bg-base-100 shadow-xl w-full max-w-md">
+        <div class="card-body">
+
+            <div class="text-center mb-6">
+                <img src="/static/Images/Logo 4.png" alt="logo">
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-error mb-4">
+                <span>Usuario o contraseña incorrectos.</span>
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex flex-col gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Usuario</span>
+                        </label>
+                        <input type="text" name="username" autofocus
+                            class="input input-bordered w-full"
+                            placeholder="Tu usuario">
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Contraseña</span>
+                        </label>
+                        <input type="password" name="password"
+                            class="input input-bordered w-full"
+                            placeholder="Tu contraseña">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-cantera w-full mt-6">
+                    Ingresar
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+</body>
+</html>

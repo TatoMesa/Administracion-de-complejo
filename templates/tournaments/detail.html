@@ -28,13 +28,13 @@
             {{ tournament.get_gender_display }} —
             {{ tournament.get_category_display }} —
             {{ tournament.get_format_display }}
-        </p>
+        </p>    
     </div>
     <div class="flex gap-2">
-        <a href="{% url 'tournaments:team_create' tournament.pk %}" class="btn btn-sm btn-outline">
+        <a href="{% url 'tournaments:team_create' tournament.pk %}" class="btn btn-primary btn-outline">
             + Equipo
         </a>
-        <a href="{% url 'tournaments:edit' tournament.pk %}" class="btn btn-sm btn-ghost">
+        <a href="{% url 'tournaments:edit' tournament.pk %}" class="btn btn-ghost">
             Editar
         </a>
         {% if tournament.status != 'finished' and tournament.teams.count >= 2 %}
