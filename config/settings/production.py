@@ -21,3 +21,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-490a4.up.railway.app',
+]
