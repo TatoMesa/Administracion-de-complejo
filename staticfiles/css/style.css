@@ -1,0 +1,32 @@
+.btn-cantera{
+    background-color: #196709;
+    border-color: #000000;
+    color: white;
+    font-weight: 600;
+}
+
+.btn-cantera:hover{
+    background-color: #000000;
+    border-color: #196709;
+    color: white;
+}
+
+.btn-primary{
+    background-color: #196709;
+    border-color: #000000;
+    color: white;
+    font-weight: 600;
+}
+
+.btn-primary:hover{
+    background-color: #000000;
+    border-color: #196709;
+    color: white;
+}
+
+.bg-primary{
+    background-color: #196709;
+    border-color: #000000;
+    color: white;
+    font-weight: 600;
+}
